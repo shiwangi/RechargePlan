@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">DataPlan</string>
+    <string name="std_duration">Duration of STD Calls</string>
+    <string name="local_duration">Duration of Local Calls</string>
+    <string name="sameOperator_duration">Duration of Same Operator Calls</string>
+    <string name="diffOperator_duration">Duration of Diff Operator Calls</string>
+    <string name="action_settings">Settings</string>
+    <string name="title_activity_get_plan">GetPlan</string>
+    <string name="title_activity_get_call_details">GetCallDetails</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="title_activity_phone_number">PhoneNumber</string>
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="title_activity_no_internet">NoInternet</string>
+    <string name="title_screen_slide">Screen Slide</string>
+    <string name="action_previous">Previous</string>
+    <string name="action_next">Next</string>
+    <string name="action_finish">Finish</string>
+    <string name="title_zoom">Zoom</string>
+    <string name="title_layout_changes">Layout Changes</string>
+    <string name="title_template_step">Step</string>
+    <string name="title_activity_screen_slide">ScreenSlideActivity</string>
+    <string name="title_activity_fetch_call_type">FetchCallTypeActivity</string>
+
+</resources>

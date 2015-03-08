@@ -10,5 +10,10 @@
             <item name="android:editTextStyle">@android:style/Widget.EditText</item>
         </style>
     <style name="EditTextStyle" parent="Widget.AppCompat.EditText"/>
-
+    <style name="CustomProgressBar" parent="android:Widget.ProgressBar.Horizontal">
+        <item name="android:indeterminateOnly">false</item>
+        <item name="android:progressDrawable">@drawable/linear</item>
+        <item name="android:minHeight">10dip</item>
+        <item name="android:maxHeight">20dip</item>
+    </style>
     </resources>

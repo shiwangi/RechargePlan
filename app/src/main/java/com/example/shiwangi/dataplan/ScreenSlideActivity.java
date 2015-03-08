@@ -18,6 +18,7 @@ package com.example.shiwangi.dataplan;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.content.Intent;
+import android.graphics.Canvas;
 import android.os.Bundle;
 import android.support.v13.app.FragmentStatePagerAdapter;
 import android.support.v4.app.FragmentActivity;
@@ -72,7 +73,7 @@ public class ScreenSlideActivity extends FragmentActivity {
         String displayText[] = new String[NUM_PAGES];
         String displayDesc[] = new String[NUM_PAGES];
 
-        ArrayList<JSONObject> bestTopup =ProgressOfPlans.topUps;
+        ArrayList<JSONObject> bestTopup =FetchCallTypeActivity.topUps;
         try{
         for(int i=0;i<NUM_PAGES;i++){
             if(i<bestTopup.size()){
@@ -95,6 +96,8 @@ public class ScreenSlideActivity extends FragmentActivity {
         mPager = (ViewPager) findViewById(R.id.pager);
         mPagerAdapter = new ScreenSlidePagerAdapter(getFragmentManager(),displayText,displayDesc);
         mPager.setAdapter(mPagerAdapter);
+        mPager.
+        mPager.draw(Canvas.CLIP_TO_LAYER_SAVE_FLAG);
         mPager.setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
             @Override
             public void onPageSelected(int position) {
@@ -105,7 +108,7 @@ public class ScreenSlideActivity extends FragmentActivity {
                 invalidateOptionsMenu();
             }
         });
-        ArrayList<PlanExpensePair> planBest = ProgressOfPlans.RatecuttersPE;
+        ArrayList<PlanExpensePair> planBest = FetchCallTypeActivity.RatecuttersPE;
         String displayText2[] = new String[NUM_PAGES];
         String displayDesc2[] = new String[NUM_PAGES];
         try {
@@ -162,7 +165,7 @@ public class ScreenSlideActivity extends FragmentActivity {
             case android.R.id.home:
                 // Navigate "up" the demo structure to the launchpad activity.
                 // See http://developer.android.com/design/patterns/navigation.html for more.
-                NavUtils.navigateUpTo(this, new Intent(this, GetCallDetails.class));
+                NavUtils.navigateUpTo(this, new Intent(this, FetchCallTypeActivity.class));
                 return true;
 
             case R.id.action_previous:

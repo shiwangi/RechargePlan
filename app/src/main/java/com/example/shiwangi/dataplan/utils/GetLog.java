@@ -54,7 +54,7 @@ public class GetLog implements Serializable{
         String mSelectionClause = android.provider.CallLog.Calls.DATE+ " >= ?";
 
         // Initializes an array to contain selection arguments
-        String[] mSelectionArgs = { createDate(2014,1,1).toString() };
+        String[] mSelectionArgs = { createDate(2014,3,1).toString() };
 
         Cursor managedCursor = context.getContentResolver().query(
                 android.provider.CallLog.Calls.CONTENT_URI,
@@ -71,7 +71,7 @@ public class GetLog implements Serializable{
         sb.append( "Call Details :");
 int numCalls =0 ;
         //&&    numCalls<10
-        while ( managedCursor.moveToNext() &&    numCalls<10 ) {
+        while ( managedCursor.moveToNext() &&    numCalls<100) {
             String phNumber = managedCursor.getString( number );
             String callType = managedCursor.getString( type );
             String callDuration = managedCursor.getString( duration );

@@ -11,6 +11,7 @@ import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
 
 
 public class PhoneNumber extends Activity implements View.OnClickListener {
@@ -64,6 +65,11 @@ public class PhoneNumber extends Activity implements View.OnClickListener {
         switch(v.getId())
         {
             case R.id.submit:phoneNumber = String.valueOf(et.getText());
+                                            if(phoneNumber.length() != 10){
+                                                Toast toast = Toast.makeText(getApplicationContext(), "Incorrect Phone number", Toast.LENGTH_SHORT);
+                                                toast.show();
+                                                break;
+                                            }
                                             SharedPreferences settings = getSharedPreferences("MyPrefsFile", 0); // 0 - for private mode
                                             SharedPreferences.Editor editor = settings.edit();
 

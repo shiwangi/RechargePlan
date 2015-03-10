@@ -17,8 +17,8 @@
         android:layout_marginLeft="150dp"
         android:layout_width="200dp"
         android:layout_height="200dp"
-        custom:arc_progress="55"
-        custom:arc_bottom_text="STD"/>
+        custom:arc_progress="0"
+        custom:arc_bottom_text="LOCAL"/>
     <ProgressBar xmlns:android="http://schemas.android.com/apk/res/android"
         android:id="@+id/linearProgressBar1"
         style="@style/CustomProgressBar"
@@ -35,6 +35,13 @@
         android:layout_marginTop="270dp"
         android:layout_marginLeft="200dp"
         />
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Your calls since 27th Februrary,2015"
+        android:layout_marginTop="320dp"
+        android:layout_marginLeft="50dp"
+        />
     <com.github.lzyzsd.circleprogress.ArcProgress
         android:id="@+id/arc_progress2"
         android:layout_marginTop="10dp"
@@ -42,7 +49,7 @@
         android:layout_width="130dp"
         android:layout_height="130dp"
         custom:arc_progress="55"
-        custom:arc_bottom_text="LOCAL"/>
+        custom:arc_bottom_text="STD"/>
     <ProgressBar xmlns:android="http://schemas.android.com/apk/res/android"
         android:id="@+id/linearProgressBar2"
 

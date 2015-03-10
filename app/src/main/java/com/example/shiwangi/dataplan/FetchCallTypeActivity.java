@@ -12,6 +12,8 @@ import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
@@ -49,12 +51,11 @@ import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class FetchCallTypeActivity extends Activity implements OnClickListener{
+public class FetchCallTypeActivity extends Activity implements OnClickListener {
     InputStream is = null;
-    JSONObject jObj = null;
     String json = "";
     String result = "";
-
+    JSONArray ratecut;
     private RechargePlans localPlans, stdPlans;
     private CallType localCall, stdCalls;
     ArrayList<Integer> timeDurationList_Sec;
@@ -63,17 +64,18 @@ public class FetchCallTypeActivity extends Activity implements OnClickListener{
     public static ArrayList<PlanExpensePair> RatecuttersPE;
     public static ArrayList<JSONObject> topUps;
     public JSONArray topups;
+    JSONObject jObj;
 
-
-    ArcProgress pBar,pBar2;
+    ArcProgress pBar, pBar2;
     ProgressBar progBar;
-    ProgressBar lp,lp2;
+    ProgressBar lp, lp2;
     private Context mContext;
     public static String myOperator, myState;
     private static GetLog mlog;
-    Button pressed,nonPressed,fetchButton;
+    Button pressed, nonPressed, fetchButton;
     CallType local, std;
     static int flag = 0;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -81,23 +83,51 @@ public class FetchCallTypeActivity extends Activity implements OnClickListener{
 
         SharedPreferences settings = getSharedPreferences("MyPrefsFile", 0);
 
-        String phoneNumber = settings.getString("phoneNumber",null);
-        mlog = new GetLog(getApplicationContext(),phoneNumber);
+        String phoneNumber = settings.getString("phoneNumber", null);
+        mlog = new GetLog(getApplicationContext(), phoneNumber);
         mContext = this;
 
         local = new CallType(new Values(0, 0), new Values(0, 0));
         std = new CallType(new Values(0, 0), new Values(0, 0));
 
-        pressed = (Button)findViewById(R.id.pressed_btn);
-        nonPressed = (Button)findViewById(R.id.nonpressed_btn);
+        pressed = (Button) findViewById(R.id.pressed_btn);
+        nonPressed = (Button) findViewById(R.id.nonpressed_btn);
 
-        fetchButton = (Button)findViewById(R.id.fetch_plan);
+        fetchButton = (Button) findViewById(R.id.fetch_plan);
 
         nonPressed.setOnClickListener(this);
     }
-@Override
-    public void onClick(View v){
-        AsyncTask<String , String, Void> task = new AsyncTask<String, String , Void>() {
+
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+// Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_fetch_call_type, menu);
+        return true;
+    }
+
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        super.onOptionsItemSelected(item);
+        switch (item.getItemId()) {
+            case R.id.change_number:
+                SharedPreferences settings = getSharedPreferences("MyPrefsFile", 0); // 0 - for private mode
+                SharedPreferences.Editor editor = settings.edit();
+//Set "hasLoggedIn" to true
+                editor.putBoolean("hasLoggedIn", false);
+                editor.commit();
+                Intent intent = new Intent(FetchCallTypeActivity.this, PhoneNumber.class);
+                startActivity(intent);
+                break;
+        }
+        return true;
+    }
+
+
+    @Override
+    public void onClick(View v) {
+        AsyncTask<String, String, Void> task = new AsyncTask<String, String, Void>() {
 
             protected void onPreExecute() {
 
@@ -108,7 +138,7 @@ public class FetchCallTypeActivity extends Activity implements OnClickListener{
                 progBar = (ProgressBar) findViewById(R.id.lp);
                 progBar.setVisibility(View.VISIBLE);
                 progBar.setIndeterminate(true);
-               // pBar.getIndeterminateDrawable().setColorFilter(Color.parseColor("03a9f4", PorterDuff.Mode.SRC_IN)
+                // pBar.getIndeterminateDrawable().setColorFilter(Color.parseColor("03a9f4", PorterDuff.Mode.SRC_IN)
                 nonPressed.setEnabled(false);
                 nonPressed.setVisibility(View.INVISIBLE);
                 fetchButton.setEnabled(false);
@@ -117,14 +147,14 @@ public class FetchCallTypeActivity extends Activity implements OnClickListener{
                 pressed.setVisibility(View.VISIBLE);
 
 
-                pBar = (ArcProgress)findViewById(R.id.arc_progress);
-                pBar2 = (ArcProgress)findViewById(R.id.arc_progress2);
-                lp = (ProgressBar)findViewById(R.id.linearProgressBar1);
-                lp2 = (ProgressBar)findViewById(R.id.linearProgressBar2);
+                pBar = (ArcProgress) findViewById(R.id.arc_progress);
+                pBar2 = (ArcProgress) findViewById(R.id.arc_progress2);
+                lp = (ProgressBar) findViewById(R.id.linearProgressBar1);
+                lp2 = (ProgressBar) findViewById(R.id.linearProgressBar2);
                 pBar.setMax((int) mlog.totalCallDuration);
                 pBar.setProgress(0);
                 pBar.setVisibility(View.VISIBLE);
-                pBar.setBottomTextSize(60);
+                pBar.setBottomTextSize(40);
 
                 lp.setIndeterminate(false);
                 lp.setMax((int) mlog.totalCallDuration);
@@ -134,7 +164,7 @@ public class FetchCallTypeActivity extends Activity implements OnClickListener{
                 pBar2.setMax((int) mlog.totalCallDuration);
                 pBar2.setProgress(0);
                 pBar2.setVisibility(View.VISIBLE);
-                pBar2.setBottomTextSize(20);
+                pBar2.setBottomTextSize(30);
                 pBar2.setSuffixText("mins");
                 pBar.setSuffixText("mins");
 
@@ -157,12 +187,12 @@ public class FetchCallTypeActivity extends Activity implements OnClickListener{
                 int sz = mlog.callList.size();
                 try {
 
-                    HashMap<String , Integer> map = new HashMap<String , Integer>();
+                    HashMap<String, Integer> map = new HashMap<String, Integer>();
 
                     for (int i = 0; i < sz; i++) {
-                        Boolean stateCheck = false,operatorCheck = false;
+                        Boolean stateCheck = false, operatorCheck = false;
                         String phNumber = mlog.callList.get(i).phoneNumber;
-                        if(!map.containsKey(phNumber)) {
+                        if (!map.containsKey(phNumber)) {
                             com.mashape.unirest.http.HttpResponse<String> stdISD = Unirest
                                     .get("https://sphirelabs-mobile-number-portability-india-operator-v1.p.mashape.com/index.php?number="
                                             + phNumber)
@@ -179,40 +209,40 @@ public class FetchCallTypeActivity extends Activity implements OnClickListener{
                                 myState = jobj.getString("Telecom circle");
                             }
 
+                        } else {
+                            stateCheck = (map.get(phNumber) / 2 == 1) ? true : false;
+                            operatorCheck = (map.get(phNumber) % 2 == 1) ? true : false;
                         }
-
-                        else{
-                            stateCheck = (map.get(phNumber)/2 == 1)?true:false;
-                            operatorCheck = (map.get(phNumber)%2 == 1)?true:false;
-                        }
-                        if(i > 0 ) {
+                        if (i > 0) {
                             if (stateCheck) {
                                 if (operatorCheck) {
                                     local.sameOperator.minutes += Math.ceil(mlog.callList.get(i).callDuration / 60);
                                     publishProgress("0");
                                     local.sameOperator.seconds += (mlog.callList.get(i).callDuration);
-                                    map.put(phNumber , 3);
+                                    map.put(phNumber, 3);
+                                } else {
+                                    map.put(phNumber, 2);
+                                    publishProgress("1");
                                 }
-
-                                else map.put(phNumber , 2);
                                 local.allCalls.minutes += Math.ceil(mlog.callList.get(i).callDuration / 60);
                                 local.allCalls.seconds += (mlog.callList.get(i).callDuration);
-                                publishProgress("1");
+
 
                             } else {
                                 if (operatorCheck) {
                                     std.sameOperator.minutes += Math.ceil(mlog.callList.get(i).callDuration / 60);
                                     std.sameOperator.seconds += (mlog.callList.get(i).callDuration);
-                                    map.put(phNumber , 1);
+                                    map.put(phNumber, 1);
                                     publishProgress("2");
+                                } else {
+                                    publishProgress("3");
+                                    map.put(phNumber, 0);
                                 }
-                                else map.put(phNumber , 0);
                                 std.allCalls.minutes += Math.ceil(mlog.callList.get(i).callDuration / 60);
                                 std.allCalls.seconds += (mlog.callList.get(i).callDuration);
-                                publishProgress("3");
-                            }
-                           }
 
+                            }
+                        }
 
 
                     }
@@ -237,25 +267,22 @@ public class FetchCallTypeActivity extends Activity implements OnClickListener{
             @Override
             protected void onProgressUpdate(String... values) {
                 super.onProgressUpdate(values);
-                if(values[0].equals("0")){
-                    pBar.setProgress(pBar.getProgress()+1);
-                    lp.setProgress(lp.getProgress()+1);
-                }
-                else  if(values[0].equals("2")){
-                    pBar2.setProgress(pBar2.getProgress()+1);
+                if (values[0].equals("0")) {
+                    pBar.setProgress(pBar.getProgress() + 1);
+                    lp.setProgress(lp.getProgress() + 1);
+                } else if (values[0].equals("2")) {
+                    pBar2.setProgress(pBar2.getProgress() + 1);
                     lp2.setProgress(4);
-                }
-                else  if(values[0].equals("1")){
-                    pBar.setProgress(pBar.getProgress()+1);
-                }
-                else
-                    pBar2.setProgress(5);
+                } else if (values[0].equals("1")) {
+                    pBar.setProgress(pBar.getProgress() + 1);
+                } else
+                    pBar2.setProgress(pBar2.getProgress() + 1);
 
             }
 
             protected void onPostExecute(Void v) {
                 //parse JSON data
-                if(flag==0) {
+                if (flag == 0) {
                     progBar.setVisibility(View.INVISIBLE);
                     timeDurationList_Sec = new ArrayList<>();
                     timeDurationList_Sec.add(local.sameOperator.seconds);
@@ -299,7 +326,6 @@ public class FetchCallTypeActivity extends Activity implements OnClickListener{
 
                                     try {
 
-                                        //check for topup plans
                                         com.mashape.unirest.http.HttpResponse<String> topup = Unirest
                                                 .get("https://sphirelabs-indian-telecom-data-recharge-plans-v1.p.mashape.com/telecomdata/v1/get/index.php?circle=" +
                                                         MashapeUtilities.getTelecomCircle(myState) +
@@ -307,7 +333,6 @@ public class FetchCallTypeActivity extends Activity implements OnClickListener{
                                                 .header("X-Mashape-Key", "lLTnQ74ANcmshmQUctqadKqW6Zidp1eUYcNjsnr6zt1WR8bSRp")
                                                 .header("Accept", "text/plain")
                                                 .asString();
-
                                         topUps = new ArrayList<>();
                                         topups = new JSONArray(topup.getBody());
                                         for (int i = 0; i < topups.length(); i++) {
@@ -322,14 +347,17 @@ public class FetchCallTypeActivity extends Activity implements OnClickListener{
 
                                         }
                                     } catch (UnirestException e) {
+                                      //  Toast.makeText(mContext, "Looks like your Internet Connection is shaky!", Toast.LENGTH_SHORT);
                                         Intent intent = new Intent(mContext, NoInternet.class);
                                         mContext.startActivity(intent);
                                         e.printStackTrace();
                                     } catch (JSONException e) {
+                                      //  Toast.makeText(mContext, "Looks like your Internet Connection is shaky!", Toast.LENGTH_SHORT);
                                         Intent intent = new Intent(mContext, NoInternet.class);
                                         mContext.startActivity(intent);
                                         e.printStackTrace();
                                     }
+
 
 
 //ratecutters
@@ -337,7 +365,7 @@ public class FetchCallTypeActivity extends Activity implements OnClickListener{
 
                                     url_select = url_select.replace(" ", "%20");
                                     try {
-                                        // defaultHttpClient
+// defaultHttpClient
                                         DefaultHttpClient httpClient = new DefaultHttpClient();
                                         HttpPost httpPost = new HttpPost(url_select);
                                         HttpResponse httpResponse = httpClient.execute(httpPost);
@@ -364,7 +392,7 @@ public class FetchCallTypeActivity extends Activity implements OnClickListener{
                                     } catch (Exception e) {
                                         Log.e("Buffer Error", "Error converting result " + e.toString());
                                     }
-                                    // try parse the string to a JSON object
+// try parse the string to a JSON object
                                     try {
                                         jObj = new JSONObject(json);
 
@@ -380,34 +408,25 @@ public class FetchCallTypeActivity extends Activity implements OnClickListener{
                                 private void parseRecharges(JSONArray recharges) {
                                     int len = recharges.length();
                                     try {
-
                                         localPlans = new RechargePlans();
                                         stdPlans = new RechargePlans();
-
                                         for (int i = 0; i < len; i++) {
-
                                             JSONObject recharge = (JSONObject) recharges.get(i);
                                             String description = recharge.getString("recharge_longdesc");
                                             String validity = recharge.getString("recharge_validity");
-                                            if (description.contains("Only applicable after") || description.contains("SMS")
-                                                    && !(validity.contains("Days") || validity.contains("Weeks")))
+                                            if (description.contains("Only applicable after") || description.contains("SMS") && !(validity.contains("Days") || validity.contains("Weeks")))
                                                 continue;
-
                                             if (LocalCallHelper(description)) {
                                                 if (SameOpRecharge(description)) {
                                                     localPlans.sameOp.add(recharge);
-                                                } else
-                                                    localPlans.all.add(recharge);
+                                                } else localPlans.all.add(recharge);
                                             }
                                             if (STDCallHelper(description)) {
                                                 if (SameOpRecharge(description)) {
                                                     stdPlans.sameOp.add(recharge);
-                                                } else
-                                                    stdPlans.all.add(recharge);
+                                                } else stdPlans.all.add(recharge);
                                             }
-
                                         }
-
                                         ArrayList<PlanExpensePair> localSameOpPE = lookForRatecutters(localPlans.sameOp, 0);
                                         ArrayList<PlanExpensePair> localAllPE = lookForRatecutters(localPlans.all, 1);
                                         ArrayList<PlanExpensePair> stdSameOpPE = lookForRatecutters(stdPlans.sameOp, 2);
@@ -426,7 +445,6 @@ public class FetchCallTypeActivity extends Activity implements OnClickListener{
                                             RatecuttersPE.add(stdAllPE.get(i));
                                         }
                                         Collections.sort(RatecuttersPE);
-
                                         Log.d("Ratecutter", "Sorted : Add debug point here to check all the 3 segments formed");
                                     } catch (JSONException e) {
                                         e.printStackTrace();
@@ -469,7 +487,7 @@ public class FetchCallTypeActivity extends Activity implements OnClickListener{
                                     try {
                                         for (int i = 0; i < len; i++) {
 
-                                            String desc = (planList.get(i).getString("recharge_longdesc"));
+                                            String desc = (planList.get(i).getString("recharge_shortdesc"));
 
                                             String pattern = "([0-9]*)(.[0-9]*)?(p)(\\/|/)([0-9]*)?(sec|s|min|mins|minutes|minute|secs)";
                                             Pattern patt = Pattern.compile(pattern);
@@ -516,25 +534,22 @@ public class FetchCallTypeActivity extends Activity implements OnClickListener{
                                 }
 
                                 protected void onPostExecute(Void v) {
+                                    // pBar.setVisibility(View.INVISIBLE);
+                                    // b.setVisibility(View.VISIBLE);
                                     JSONArray recharges = null;
-                                   // pBar.setVisibility(View.INVISIBLE);
-                                   // b.setVisibility(View.VISIBLE);
+
                                     try {
                                         recharges = new JSONArray(jObj.getString("data"));
 
                                         parseRecharges(recharges);
-                                        Intent intent = new Intent(getApplicationContext(), ScreenSlideActivity.class);
-                                        intent.putExtra("logData", mlog);
-                                        startActivity(intent);
-
                                         //this.progressDialog.dismiss();
 
                                     } catch (JSONException e) {
                                         e.printStackTrace();
                                     }
-
-
-
+                                    Intent intent = new Intent(getApplicationContext(), ScreenSlideActivity.class);
+                                    intent.putExtra("logData", mlog);
+                                    startActivity(intent);
 
                                 }
 

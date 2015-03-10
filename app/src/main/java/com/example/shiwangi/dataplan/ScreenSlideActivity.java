@@ -18,6 +18,7 @@ package com.example.shiwangi.dataplan;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Canvas;
 import android.os.Bundle;
 import android.support.v13.app.FragmentStatePagerAdapter;
@@ -96,8 +97,6 @@ public class ScreenSlideActivity extends FragmentActivity {
         mPager = (ViewPager) findViewById(R.id.pager);
         mPagerAdapter = new ScreenSlidePagerAdapter(getFragmentManager(),displayText,displayDesc);
         mPager.setAdapter(mPagerAdapter);
-        mPager.
-        mPager.draw(Canvas.CLIP_TO_LAYER_SAVE_FLAG);
         mPager.setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
             @Override
             public void onPageSelected(int position) {
@@ -112,20 +111,18 @@ public class ScreenSlideActivity extends FragmentActivity {
         String displayText2[] = new String[NUM_PAGES];
         String displayDesc2[] = new String[NUM_PAGES];
         try {
-        for(int i=0;i<NUM_PAGES;i++){
-            if(i<planBest.size()) {
-                displayText2[i] = planBest.get(i).plan.getString("recharge_shortdesc");
-                displayDesc2[i]=planBest.get(i).plan.getString("recharge_longdesc");
+            for(int i=0;i<NUM_PAGES;i++){
+                if(i<planBest.size())
+                {
+                    displayText2[i] = planBest.get(i).plan.getString("recharge_shortdesc");
+                    displayDesc2[i]=planBest.get(i).plan.getString("recharge_longdesc");
+                }
+                else {
+                    displayText2[i] = "Oops List over";
+                    displayDesc2[i] = "Oops List over";
+                }
             }
-            else {
-                displayText2[i] = "Oops List over";
-                displayDesc2[i] = "Oops List over";
-            }
-
-        }
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
+        } catch (JSONException e) { e.printStackTrace(); }
         mPager2 = (ViewPager) findViewById(R.id.pager2);
         mPagerAdapter2 = new ScreenSlidePagerAdapter(getFragmentManager(),displayText2,displayDesc2);
         mPager2.setAdapter(mPagerAdapter2);
@@ -179,6 +176,17 @@ public class ScreenSlideActivity extends FragmentActivity {
                 // will do nothing.
                 mPager.setCurrentItem(mPager.getCurrentItem() + 1);
                 return true;
+
+            case R.id.change_number:
+                SharedPreferences settings = getSharedPreferences("MyPrefsFile", 0); // 0 - for private mode
+                SharedPreferences.Editor editor = settings.edit();
+//Set "hasLoggedIn" to true
+                editor.putBoolean("hasLoggedIn", false);
+                editor.commit();
+                Intent intent = new Intent(ScreenSlideActivity.this , PhoneNumber.class);
+                startActivity(intent);
+                break;
+
         }
 
         return super.onOptionsItemSelected(item);

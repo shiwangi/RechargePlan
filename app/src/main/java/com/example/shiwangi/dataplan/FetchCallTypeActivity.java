@@ -487,7 +487,7 @@ public class FetchCallTypeActivity extends Activity implements OnClickListener {
                                     try {
                                         for (int i = 0; i < len; i++) {
 
-                                            String desc = (planList.get(i).getString("recharge_shortdesc"));
+                                            String desc = (planList.get(i).getString("recharge_longdesc"));
 
                                             String pattern = "([0-9]*)(.[0-9]*)?(p)(\\/|/)([0-9]*)?(sec|s|min|mins|minutes|minute|secs)";
                                             Pattern patt = Pattern.compile(pattern);

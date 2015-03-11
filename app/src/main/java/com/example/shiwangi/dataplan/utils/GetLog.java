@@ -10,6 +10,8 @@ import android.telephony.TelephonyManager;
 import android.util.Log;
 
 import java.io.Serializable;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -33,9 +35,6 @@ public class GetLog implements Serializable{
 
         getCarrierName(context);
         getCallDetails(context);
-
-
-
     }
 
     public static void getCallDetails(Context context) {
@@ -51,25 +50,30 @@ public class GetLog implements Serializable{
         };
 
         // Defines a string to contain the selection clause
-        String mSelectionClause = android.provider.CallLog.Calls.DATE+ " >= ?";
 
         // Initializes an array to contain selection arguments
-        String[] mSelectionArgs = { createDate(2014,3,1).toString() };
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+        Date fromDate = null;
+        try {
+            fromDate = sdf.parse("01/3/2014");
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
 
-        Cursor managedCursor = context.getContentResolver().query(
-                android.provider.CallLog.Calls.CONTENT_URI,
-                strFields,
-                mSelectionClause,
-                mSelectionArgs,
-                null
-        );
+
+        Cursor managedCursor = context.getContentResolver().query(CallLog.Calls.CONTENT_URI,
+                new String[] { CallLog.Calls.DATE, CallLog.Calls.DURATION,CallLog.Calls.TYPE,
+                        CallLog.Calls.NUMBER, CallLog.Calls._ID },
+                CallLog.Calls.DATE + ">?",
+                new String[] { String.valueOf(fromDate.getTime())},
+                CallLog.Calls.NUMBER + " asc");
 
         int number = managedCursor.getColumnIndex(CallLog.Calls.NUMBER);
         int type = managedCursor.getColumnIndex(CallLog.Calls.TYPE);
         int duration = managedCursor.getColumnIndex(CallLog.Calls.DURATION);
         int dateid = managedCursor.getColumnIndex(CallLog.Calls.DATE);
         sb.append( "Call Details :");
-int numCalls =0 ;
+        int numCalls =0 ;
         //&&    numCalls<10
         while ( managedCursor.moveToNext() &&    numCalls<100) {
             String phNumber = managedCursor.getString( number );
@@ -84,11 +88,9 @@ int numCalls =0 ;
                     break;
 
                 case CallLog.Calls.INCOMING_TYPE:
-                    dir = "INCOMING";
                     continue;
 
                 case CallLog.Calls.MISSED_TYPE:
-                    dir = "MISSED";
                     continue;
             }
 

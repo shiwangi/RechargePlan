@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">DataPlan</string>
+    <string name="app_name">Recharge Bachat</string>
     <string name="std_duration">Duration of STD Calls</string>
     <string name="local_duration">Duration of Local Calls</string>
     <string name="sameOperator_duration">Duration of Same Operator Calls</string>
@@ -22,5 +22,6 @@
     <string name="title_template_step">Step</string>
     <string name="title_activity_screen_slide">ScreenSlideActivity</string>
     <string name="title_activity_fetch_call_type">FetchCallTypeActivity</string>
+    <string name="title_activity_operator_not_found">OperatorNotFound</string>
 
 </resources>

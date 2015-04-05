@@ -25,6 +25,7 @@ public class PhoneNumber extends Activity implements View.OnClickListener {
         {
             //Go directly to main activity.
             Intent intent = new Intent(this , FetchCallTypeActivity.class);
+            intent.putExtra("parent", "PhoneNumber");
             startActivity(intent);
         }
         setContentView(R.layout.activity_phone_number);
@@ -79,6 +80,7 @@ public class PhoneNumber extends Activity implements View.OnClickListener {
                             // Commit the edits!
                                             editor.commit();
                                             Intent intent = new Intent(this , FetchCallTypeActivity.class);
+                                            intent.putExtra("parent", "PhoneNumber");
                                             startActivity(intent);
                                             break;
         }

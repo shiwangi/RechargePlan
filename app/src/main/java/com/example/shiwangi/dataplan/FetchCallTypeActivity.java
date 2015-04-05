@@ -1,5 +1,7 @@
 package com.example.shiwangi.dataplan;
 
+import android.app.AlertDialog;
+import android.app.DatePickerDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -17,6 +19,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
+import android.widget.DatePicker;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -45,9 +48,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -71,20 +77,36 @@ public class FetchCallTypeActivity extends Activity implements OnClickListener {
     ProgressBar lp, lp2;
     private Context mContext;
     public static String myOperator, myState;
+    private DatePickerDialog fromDatePickerDialog;
     private static GetLog mlog;
     Button pressed, nonPressed, fetchButton;
     CallType local, std;
     static int flag = 0;
+    private SimpleDateFormat dateFormatter;
+    TextView fromDate;
+    static String phoneNumber;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_fetch_call_type);
+        Bundle extra = getIntent().getExtras();
+        String prevIntent = extra.getString("parent");
 
+        if(prevIntent.equals("OperatorNotFound")){
+            myOperator = extra.getString("myOperator");
+            myState = extra.getString("myState");
+        }
+
+        fromDate = (TextView)findViewById(R.id.fromDate);
+        fromDate.setOnClickListener(this);
         SharedPreferences settings = getSharedPreferences("MyPrefsFile", 0);
 
-        String phoneNumber = settings.getString("phoneNumber", null);
-        mlog = new GetLog(getApplicationContext(), phoneNumber);
+        phoneNumber = settings.getString("phoneNumber", null);
+
+        String date = settings.getString("fromDate", "03-01-2015");
+        fromDate.setText("Your calls since " + date);
+        mlog = new GetLog(getApplicationContext(), phoneNumber,date);
         mContext = this;
 
         local = new CallType(new Values(0, 0), new Values(0, 0));
@@ -96,16 +118,38 @@ public class FetchCallTypeActivity extends Activity implements OnClickListener {
         fetchButton = (Button) findViewById(R.id.fetch_plan);
 
         nonPressed.setOnClickListener(this);
+        setFromDate();
     }
 
+    private void setFromDate() {
+        dateFormatter = new SimpleDateFormat("dd-MM-yyyy", Locale.US);
+
+        Calendar newCalendar = Calendar.getInstance();
+        fromDatePickerDialog = new DatePickerDialog(this, new DatePickerDialog.OnDateSetListener() {
+
+            public void onDateSet(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
+                Calendar newDate = Calendar.getInstance();
+                newDate.set(year, monthOfYear, dayOfMonth);
+                fromDate.setText("Your calls since " + dateFormatter.format(newDate.getTime()));
+                SharedPreferences settings = getSharedPreferences("MyPrefsFile", 0); // 0 - for private mode
+                SharedPreferences.Editor editor = settings.edit();
+                editor.putString("fromDate",dateFormatter.format(newDate.getTime()));
+                // Commit the edits!
+                editor.commit();
+
+                mlog = new GetLog(getApplicationContext(), phoneNumber,dateFormatter.format(newDate.getTime()));
+            }
+
+        },newCalendar.get(Calendar.YEAR), newCalendar.get(Calendar.MONTH), newCalendar.get(Calendar.DAY_OF_MONTH));
+
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-// Inflate the menu; this adds items to the action bar if it is present.
+
         getMenuInflater().inflate(R.menu.menu_fetch_call_type, menu);
         return true;
     }
-
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -114,7 +158,6 @@ public class FetchCallTypeActivity extends Activity implements OnClickListener {
             case R.id.change_number:
                 SharedPreferences settings = getSharedPreferences("MyPrefsFile", 0); // 0 - for private mode
                 SharedPreferences.Editor editor = settings.edit();
-//Set "hasLoggedIn" to true
                 editor.putBoolean("hasLoggedIn", false);
                 editor.commit();
                 Intent intent = new Intent(FetchCallTypeActivity.this, PhoneNumber.class);
@@ -124,9 +167,18 @@ public class FetchCallTypeActivity extends Activity implements OnClickListener {
         return true;
     }
 
+    public void operatorNotFound(){
+        Intent intent = new Intent(FetchCallTypeActivity.this , OperatorNotFound.class);
+        startActivity(intent);
+    }
 
     @Override
     public void onClick(View v) {
+        if(v == fromDate){
+            fromDatePickerDialog.show();
+            return;
+        }
+
         AsyncTask<String, String, Void> task = new AsyncTask<String, String, Void>() {
 
             protected void onPreExecute() {
@@ -138,7 +190,6 @@ public class FetchCallTypeActivity extends Activity implements OnClickListener {
                 progBar = (ProgressBar) findViewById(R.id.lp);
                 progBar.setVisibility(View.VISIBLE);
                 progBar.setIndeterminate(true);
-                // pBar.getIndeterminateDrawable().setColorFilter(Color.parseColor("03a9f4", PorterDuff.Mode.SRC_IN)
                 nonPressed.setEnabled(false);
                 nonPressed.setVisibility(View.INVISIBLE);
                 fetchButton.setEnabled(false);
@@ -188,8 +239,11 @@ public class FetchCallTypeActivity extends Activity implements OnClickListener {
                 try {
 
                     HashMap<String, Integer> map = new HashMap<String, Integer>();
-
-                    for (int i = 0; i < sz; i++) {
+                    int i = 0;
+                    if(myOperator != null && myState != null){
+                        i=1;
+                    }
+                    for (; i < sz; i++) {
                         Boolean stateCheck = false, operatorCheck = false;
                         String phNumber = mlog.callList.get(i).phoneNumber;
                         if (!map.containsKey(phNumber)) {
@@ -202,43 +256,51 @@ public class FetchCallTypeActivity extends Activity implements OnClickListener {
                             Log.d("FetchPlans", "Type of Call: " + mlog.callList.get(i).phoneNumber
                                     + ": " + stdISD.getBody() + "\n");
                             JSONObject jobj = new JSONObject(stdISD.getBody());
-                            operatorCheck = jobj.getString("Operator").equals(myOperator);
-                            stateCheck = jobj.getString("Telecom circle").equals(myState);
+
                             if (i == 0) {
                                 myOperator = jobj.getString("Operator");
                                 myState = jobj.getString("Telecom circle");
                             }
+                            operatorCheck = jobj.getString("Operator").equals(myOperator);
+                            stateCheck = jobj.getString("Telecom circle").equals(myState);
+                            if(myOperator.equals("false") || myState.equals("false")) {
 
-                        } else {
-                            stateCheck = (map.get(phNumber) / 2 == 1) ? true : false;
-                            operatorCheck = (map.get(phNumber) % 2 == 1) ? true : false;
+                                Thread.currentThread().interrupt();
+                                operatorNotFound();
+                                break;
+                            }
+
                         }
                         if (i > 0) {
                             if (stateCheck) {
                                 if (operatorCheck) {
-                                    local.sameOperator.minutes += Math.ceil(mlog.callList.get(i).callDuration / 60);
-                                    publishProgress("0");
+                                    local.sameOperator.minutes += Math.ceil(mlog.callList.get(i).callDuration / 60.0);
+                                    publishProgress(new String[]{"0",
+                                            String.valueOf((int)Math.ceil(mlog.callList.get(i).callDuration / 60.0))});
                                     local.sameOperator.seconds += (mlog.callList.get(i).callDuration);
                                     map.put(phNumber, 3);
                                 } else {
                                     map.put(phNumber, 2);
-                                    publishProgress("1");
+                                    publishProgress(new String[]{"1",
+                                            String.valueOf((int)Math.ceil(mlog.callList.get(i).callDuration / 60.0))});
                                 }
-                                local.allCalls.minutes += Math.ceil(mlog.callList.get(i).callDuration / 60);
+                                local.allCalls.minutes += Math.ceil(mlog.callList.get(i).callDuration / 60.0);
                                 local.allCalls.seconds += (mlog.callList.get(i).callDuration);
 
 
                             } else {
                                 if (operatorCheck) {
-                                    std.sameOperator.minutes += Math.ceil(mlog.callList.get(i).callDuration / 60);
+                                    std.sameOperator.minutes += Math.ceil(mlog.callList.get(i).callDuration / 60.0);
                                     std.sameOperator.seconds += (mlog.callList.get(i).callDuration);
                                     map.put(phNumber, 1);
-                                    publishProgress("2");
+                                    publishProgress(new String[]{"2",
+                                            String.valueOf((int)Math.ceil(mlog.callList.get(i).callDuration / 60.0))});
                                 } else {
-                                    publishProgress("3");
+                                    publishProgress(new String[]{"3",
+                                            String.valueOf((int)Math.ceil(mlog.callList.get(i).callDuration / 60.0))});
                                     map.put(phNumber, 0);
                                 }
-                                std.allCalls.minutes += Math.ceil(mlog.callList.get(i).callDuration / 60);
+                                std.allCalls.minutes += Math.ceil(mlog.callList.get(i).callDuration / 60.0);
                                 std.allCalls.seconds += (mlog.callList.get(i).callDuration);
 
                             }
@@ -251,6 +313,8 @@ public class FetchCallTypeActivity extends Activity implements OnClickListener {
                 } catch (Exception e) {
 //            Toast.makeText(mContext,"Looks like your Internet Connection is shaky!",Toast.LENGTH_SHORT);
                     flag = 1;
+
+                    Thread.currentThread().interrupt();
                     Intent intent = new Intent(mContext, NoInternet.class);
                     mContext.startActivity(intent);
                     e.printStackTrace();
@@ -268,15 +332,15 @@ public class FetchCallTypeActivity extends Activity implements OnClickListener {
             protected void onProgressUpdate(String... values) {
                 super.onProgressUpdate(values);
                 if (values[0].equals("0")) {
-                    pBar.setProgress(pBar.getProgress() + 1);
-                    lp.setProgress(lp.getProgress() + 1);
+                    pBar.setProgress(pBar.getProgress() + Integer.parseInt(values[1]));
+                    lp.setProgress(lp.getProgress() + Integer.parseInt(values[1]));
                 } else if (values[0].equals("2")) {
-                    pBar2.setProgress(pBar2.getProgress() + 1);
-                    lp2.setProgress(4);
+                    pBar2.setProgress(pBar2.getProgress() + Integer.parseInt(values[1]));
+                    lp2.setProgress(lp2.getProgress() + Integer.parseInt(values[1]));
                 } else if (values[0].equals("1")) {
-                    pBar.setProgress(pBar.getProgress() + 1);
+                    pBar.setProgress(pBar.getProgress() + Integer.parseInt(values[1]));
                 } else
-                    pBar2.setProgress(pBar2.getProgress() + 1);
+                    pBar2.setProgress(pBar2.getProgress() + Integer.parseInt(values[1]));
 
             }
 
@@ -353,6 +417,8 @@ public class FetchCallTypeActivity extends Activity implements OnClickListener {
                                         e.printStackTrace();
                                     } catch (JSONException e) {
                                       //  Toast.makeText(mContext, "Looks like your Internet Connection is shaky!", Toast.LENGTH_SHORT);
+
+                                        Thread.currentThread().interrupt();
                                         Intent intent = new Intent(mContext, NoInternet.class);
                                         mContext.startActivity(intent);
                                         e.printStackTrace();
@@ -365,7 +431,7 @@ public class FetchCallTypeActivity extends Activity implements OnClickListener {
 
                                     url_select = url_select.replace(" ", "%20");
                                     try {
-// defaultHttpClient
+                                        
                                         DefaultHttpClient httpClient = new DefaultHttpClient();
                                         HttpPost httpPost = new HttpPost(url_select);
                                         HttpResponse httpResponse = httpClient.execute(httpPost);
@@ -392,7 +458,7 @@ public class FetchCallTypeActivity extends Activity implements OnClickListener {
                                     } catch (Exception e) {
                                         Log.e("Buffer Error", "Error converting result " + e.toString());
                                     }
-// try parse the string to a JSON object
+                                    // try parse the string to a JSON object
                                     try {
                                         jObj = new JSONObject(json);
 

@@ -15,18 +15,15 @@
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
-
         <activity
             android:name=".GetPlan"
             android:label="Call Log Data" >
         </activity>
-
         <activity
             android:name=".PhoneNumber"
             android:label="Recharge Bachat" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 >
@@ -42,6 +39,10 @@
         <activity
             android:name=".FetchCallTypeActivity"
             android:label="Your call history" >
+        </activity>
+        <activity
+            android:name=".OperatorNotFound"
+            android:label="@string/title_activity_operator_not_found" >
         </activity>
     </application>
 

@@ -23,18 +23,14 @@ public class PhoneNumber extends Activity implements View.OnClickListener {
         boolean hasLoggedIn = settings.getBoolean("hasLoggedIn", false);
         if(hasLoggedIn)
         {
-            //Go directly to main activity.
             Intent intent = new Intent(this , FetchCallTypeActivity.class);
             intent.putExtra("parent", "PhoneNumber");
             startActivity(intent);
         }
         setContentView(R.layout.activity_phone_number);
-
         et =(EditText) findViewById(R.id.editText1);
         Button b =(Button) findViewById(R.id.submit);
         b.setOnClickListener( this);
-
-
 
     }
 
@@ -48,9 +44,6 @@ public class PhoneNumber extends Activity implements View.OnClickListener {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
@@ -73,12 +66,10 @@ public class PhoneNumber extends Activity implements View.OnClickListener {
                                             }
                                             SharedPreferences settings = getSharedPreferences("MyPrefsFile", 0); // 0 - for private mode
                                             SharedPreferences.Editor editor = settings.edit();
-
-                            //Set "hasLoggedIn" to true
                                             editor.putBoolean("hasLoggedIn", true);
                                             editor.putString("phoneNumber",phoneNumber);
-                            // Commit the edits!
-                                            editor.commit();
+
+                                            editor.commit();    // Commit the edits!
                                             Intent intent = new Intent(this , FetchCallTypeActivity.class);
                                             intent.putExtra("parent", "PhoneNumber");
                                             startActivity(intent);

@@ -37,14 +37,6 @@ public class MashapeUtilities {
 
     public static String getOperatorCode(String myOperator) {
 
-//        myOperator = " Aircel – aircel, Airtel – airtel, BSNL – bsnl, Tata Docomo GSM – tatadocomogsm, Idea – idea, Loop Mobile – loopmobile, MTNL Delhi – mtnldelhi, Reliance CDMA – reliancecdma, Tata Indicom – tataindicom, Uninor – uninor, Vodafone – Vodafone, MTS – mts, Videocon Mobile – videoconmobile, Virgin GSM – virgingsm, Tata Docomo CDMA – tatadocomocdma, MTNL Mumbai – mtnlmumbai";
-//        String tokens[] = myOperator.split(",");
-//        String s="";
-//               for(int i=0;i<tokens.length;i++){
-//                    String t[] = tokens[i].split("–");
-//                    s = s+("case"+ " \""+t[0].substring(1,t[0].length()-1)+ "\""+": "+"code = "+ "\"" + t[1].substring(1) +"\"" +";" +"\n");
-//                }
-//        Log.d("ry",s);
         String code = "";
     switch(myOperator){
             case "Aircel": code = "aircel";break;

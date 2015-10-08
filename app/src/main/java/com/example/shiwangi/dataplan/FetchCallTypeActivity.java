@@ -27,6 +27,7 @@ import android.widget.Toast;
 import com.example.shiwangi.dataplan.utils.CallType;
 import com.example.shiwangi.dataplan.utils.GetLog;
 import com.example.shiwangi.dataplan.utils.MashapeUtilities;
+import com.example.shiwangi.dataplan.utils.NetworkCalls;
 import com.example.shiwangi.dataplan.utils.PlanExpensePair;
 import com.example.shiwangi.dataplan.utils.RechargePlans;
 import com.example.shiwangi.dataplan.utils.Values;
@@ -58,14 +59,12 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class FetchCallTypeActivity extends Activity implements OnClickListener {
-    InputStream is = null;
-    String json = "";
+
     String result = "";
     JSONArray ratecut;
     private RechargePlans localPlans, stdPlans;
     private CallType localCall, stdCalls;
     ArrayList<Integer> timeDurationList_Sec;
-
     ArrayList<Integer> timeDurationList_Min;
     public static ArrayList<PlanExpensePair> RatecuttersPE;
     public static ArrayList<JSONObject> topUps;
@@ -93,10 +92,6 @@ public class FetchCallTypeActivity extends Activity implements OnClickListener {
         Bundle extra = getIntent().getExtras();
         String prevIntent = extra.getString("parent");
 
-        if(prevIntent.equals("OperatorNotFound")){
-            myOperator = extra.getString("myOperator");
-            myState = extra.getString("myState");
-        }
 
         fromDate = (TextView)findViewById(R.id.fromDate);
         fromDate.setOnClickListener(this);
@@ -104,7 +99,7 @@ public class FetchCallTypeActivity extends Activity implements OnClickListener {
 
         phoneNumber = settings.getString("phoneNumber", null);
 
-        String date = settings.getString("fromDate", "03-01-2015");
+        String date = settings.getString("fromDate", "03-09-2015");
         fromDate.setText("Your calls since " + date);
         mlog = new GetLog(getApplicationContext(), phoneNumber,date);
         mContext = this;
@@ -424,50 +419,13 @@ public class FetchCallTypeActivity extends Activity implements OnClickListener {
                                         e.printStackTrace();
                                     }
 
+                                    //RateCutters
 
-
-//ratecutters
                                     String url_select = "http://datayuge-prod.apigee.net/v3/rechargeplans/?apikey=XMWutQqSknlAm0p0zAnjeJ5JO5FPgbxs&operatorid=" + myOperator.toLowerCase() + "&circleid=" + "andhra pradesh" + "&recharge_type=special";
 
-                                    url_select = url_select.replace(" ", "%20");
-                                    try {
-                                        
-                                        DefaultHttpClient httpClient = new DefaultHttpClient();
-                                        HttpPost httpPost = new HttpPost(url_select);
-                                        HttpResponse httpResponse = httpClient.execute(httpPost);
-                                        HttpEntity httpEntity = httpResponse.getEntity();
-                                        is = httpEntity.getContent();
-                                    } catch (UnsupportedEncodingException e) {
-                                        e.printStackTrace();
-                                    } catch (ClientProtocolException e) {
-                                        e.printStackTrace();
-                                    } catch (IOException e) {
-                                        e.printStackTrace();
-                                    }
-                                    try {
-                                        BufferedReader reader = new BufferedReader(new InputStreamReader(
-                                                is, "iso-8859-1"), 8);
-                                        StringBuilder sb = new StringBuilder();
-                                        String line = null;
-                                        while ((line = reader.readLine()) != null) {
-                                            sb.append(line);
-                                        }
-                                        is.close();
-                                        json = sb.toString();
-                                        Log.d("FetchPlans", "special plans: \n" + json);
-                                    } catch (Exception e) {
-                                        Log.e("Buffer Error", "Error converting result " + e.toString());
-                                    }
-                                    // try parse the string to a JSON object
-                                    try {
-                                        jObj = new JSONObject(json);
-
-                                    } catch (JSONException e) {
-                                        Log.e("JSON Parser", "Error parsing data " + e.toString());
-                                    }
-
-
-                                    return null;
+                                    NetworkCalls net = new NetworkCalls();
+                                    jObj = net.getJsonObjectFrom(url_select);
+                                    return  null;
                                 }
 
 
@@ -563,31 +521,35 @@ public class FetchCallTypeActivity extends Activity implements OnClickListener {
                                                 String st = matcher.group();
                                                 st = st.replaceAll("\\s+", "");
                                                 String tokens[] = st.split("p/");
-                                                if (tokens.length != 2)
-                                                    continue;
+                                                try {
+                                                    if (tokens.length != 2)
+                                                        continue;
 
-                                                Double costPerUnit = Double.parseDouble(tokens[0]);
-                                                Double rechargeValue = (planList.get(i).getDouble("recharge_amount"));
-                                                String s = planList.get(i).getString("recharge_validity");
-                                                Double rechargeCost = computeCost(rechargeValue, s);
-                                                if (tokens[1].contains("min") || tokens[1].contains("mins")
-                                                        || tokens[1].contains("minute") || tokens[1].contains("minutes")) {
-                                                    // findForLocal
+                                                    Double costPerUnit = Double.parseDouble(tokens[0]);
+                                                    Double rechargeValue = (planList.get(i).getDouble("recharge_amount"));
+                                                    String s = planList.get(i).getString("recharge_validity");
+                                                    Double rechargeCost = computeCost(rechargeValue, s);
+                                                    if (tokens[1].contains("min") || tokens[1].contains("mins")
+                                                            || tokens[1].contains("minute") || tokens[1].contains("minutes")) {
+                                                        // findForLocal
 
-                                                    double expectedExpense = timeDurationList_Min.get(index) * costPerUnit + rechargeCost;
-                                                    PlanPE.add(new PlanExpensePair(planList.get(i), expectedExpense));
-                                                } else {
+                                                        double expectedExpense = timeDurationList_Min.get(index) * costPerUnit + rechargeCost;
+                                                        PlanPE.add(new PlanExpensePair(planList.get(i), expectedExpense));
+                                                    } else {
 
-                                                    int numSec = 1;
-                                                    if (tokens[1].charAt(0) > '0' && tokens[1].charAt(0) < '9') {
-                                                        numSec = tokens[1].charAt(0) - '0';
+                                                        int numSec = 1;
+                                                        if (tokens[1].charAt(0) > '0' && tokens[1].charAt(0) < '9') {
+                                                            numSec = tokens[1].charAt(0) - '0';
+                                                        }
+                                                        double expectedExpense = (timeDurationList_Sec.get(index) * costPerUnit) / numSec + rechargeCost;
+                                                        PlanPE.add(new PlanExpensePair(planList.get(i), expectedExpense));
+
                                                     }
-                                                    double expectedExpense = (timeDurationList_Sec.get(index) * costPerUnit) / numSec + rechargeCost;
-                                                    PlanPE.add(new PlanExpensePair(planList.get(i), expectedExpense));
+
+                                                }catch(Exception e){
 
                                                 }
-                                            } else {
-                                                // stdPlans.sameOperator.freeMinutes.add(stdPlans.sameOp.get(i));
+
                                             }
                                         }
                                         Log.d("Ratecutter", "Found all among same Operator Plans");
